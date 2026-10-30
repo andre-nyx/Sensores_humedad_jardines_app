@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "982204397401",
+    "project_id": "sensoresdehumedadjardines",
+    "storage_bucket": "sensoresdehumedadjardines.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:982204397401:android:c39c6eaf98e615bc38be48",
+        "android_client_info": {
+          "package_name": "com.jardines.sensores"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFUJ4CRTFZtJAxCz0ugAWUMDbWOGx5HIs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
