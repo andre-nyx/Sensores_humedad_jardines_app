@@ -1,4 +1,4 @@
-package com.jardines.sensores
+package com.jardines.sensores.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*

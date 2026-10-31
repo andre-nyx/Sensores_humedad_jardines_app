@@ -7,7 +7,6 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Yard
@@ -21,11 +20,8 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -37,6 +33,7 @@ import androidx.navigation.navArgument
 import com.jardines.sensores.ui.screens.AddEditSensorScreen
 import com.jardines.sensores.ui.screens.AlertsScreen
 import com.jardines.sensores.ui.screens.DashboardScreen
+import com.jardines.sensores.ui.screens.LoginScreen
 import com.jardines.sensores.ui.screens.SensorDetailScreen
 import com.jardines.sensores.ui.screens.SettingsScreen
 import com.jardines.sensores.ui.theme.DryWarningOrange
@@ -62,7 +59,20 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainAppNavHost(viewModel = viewModel)
+                    // Estado para controlar si el usuario ya inició sesión
+                    var isLoggedIn by remember { mutableStateOf(false) }
+
+                    if (!isLoggedIn) {
+                        // Muestra la pantalla de acceso (Login) primero
+                        LoginScreen(
+                            onLoginSuccess = {
+                                isLoggedIn = true // Al poner usuario "admin" y contraseña "1234", entra al sistema
+                            }
+                        )
+                    } else {
+                        // Una vez autenticado, carga toda la navegación de los sensores
+                        MainAppNavHost(viewModel = viewModel)
+                    }
                 }
             }
         }
