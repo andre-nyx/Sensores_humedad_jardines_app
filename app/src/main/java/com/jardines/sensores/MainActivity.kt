@@ -1,9 +1,17 @@
 package com.jardines.sensores
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -23,6 +31,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -39,6 +49,7 @@ import com.jardines.sensores.ui.screens.SettingsScreen
 import com.jardines.sensores.ui.theme.DryWarningOrange
 import com.jardines.sensores.ui.theme.GreenPrimary
 import com.jardines.sensores.ui.theme.SensoresDeHumedadTheme
+import com.jardines.sensores.utils.NotificationHelper
 import com.jardines.sensores.viewmodel.SensorViewModel
 
 sealed class BottomNavItem(val route: String, val title: String, val icon: ImageVector) {
@@ -53,8 +64,25 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Registrar el canal de notificaciones
+        NotificationHelper.createNotificationChannel(this)
+
+        // Disparador de prueba diferido (espera 60 segundos y dispara la notificación)
+        lifecycleScope.launch {
+            delay(60000)
+            NotificationHelper.sendHumeAlertNotification(
+                context = this@MainActivity,
+                title = "🚨 Alerta de Prueba de Sensores",
+                message = "¡Funciona! La humedad del Jardín cayó por debajo del límite."
+            )
+        }
+
         setContent {
             SensoresDeHumedadTheme {
+                // Solicitar permiso de notificaciones en Android 13+ (API 33+)
+                RequestNotificationPermissionEffect()
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -74,6 +102,36 @@ class MainActivity : ComponentActivity() {
                         MainAppNavHost(viewModel = viewModel)
                     }
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Composable que solicita el permiso POST_NOTIFICATIONS en tiempo de ejecución para Android 13+ (API 33+).
+ */
+@Composable
+fun RequestNotificationPermissionEffect() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val context = LocalContext.current
+        var hasPermission by remember {
+            mutableStateOf(
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            )
+        }
+
+        val launcher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            hasPermission = isGranted
+        }
+
+        LaunchedEffect(Unit) {
+            if (!hasPermission) {
+                launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
     }

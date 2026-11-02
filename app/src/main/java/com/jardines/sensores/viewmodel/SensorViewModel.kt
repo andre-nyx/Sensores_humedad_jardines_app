@@ -1,5 +1,6 @@
 package com.jardines.sensores.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jardines.sensores.data.SensorRepository
@@ -10,6 +11,7 @@ import com.jardines.sensores.model.SensorAlert
 import com.jardines.sensores.model.SoilType
 import com.jardines.sensores.model.WeatherForecast
 import com.jardines.sensores.model.Zone
+import com.jardines.sensores.utils.NotificationHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -167,12 +169,50 @@ class SensorViewModel(
         repository.deleteSensor(sensorId)
     }
 
-    fun refreshReadingsNow() {
+    fun refreshReadingsNow(context: Context? = null) {
         viewModelScope.launch {
             _isSimulating.value = true
             repository.simulateSensorReadingUpdate()
             delay(500)
             _isSimulating.value = false
+            context?.let { checkAllSensorsForLowHumidity(it) }
+        }
+    }
+
+    /**
+     * Evalúa la humedad de un sensor individual y dispara una notificación del sistema
+     * si cae por debajo del umbral crítico (por defecto < 20%).
+     */
+    fun checkAndNotifyCriticalHumidity(
+        context: Context,
+        sensor: GardenSensor,
+        criticalThreshold: Int = 20
+    ) {
+        if (sensor.moisturePercentage < criticalThreshold) {
+            NotificationHelper.sendHumeAlertNotification(
+                context = context,
+                title = "¡Alerta de Humedad Crítica!",
+                message = "El sensor '${sensor.name}' en zona '${sensor.zone.label}' tiene una humedad crítica del ${sensor.moisturePercentage}% (menor al $criticalThreshold%)."
+            )
+        }
+    }
+
+    /**
+     * Revisa todos los sensores activos y envía una notificación del sistema por cada uno
+     * cuya humedad esté por debajo del umbral crítico (por defecto < 20%).
+     */
+    fun checkAllSensorsForLowHumidity(
+        context: Context,
+        criticalThreshold: Int = 20
+    ) {
+        sensors.value.forEach { sensor ->
+            if (sensor.moisturePercentage < criticalThreshold) {
+                NotificationHelper.sendHumeAlertNotification(
+                    context = context,
+                    title = "¡Alerta: Humedad Crítica en ${sensor.name}!",
+                    message = "La humedad actual de '${sensor.name}' es del ${sensor.moisturePercentage}%. Se requiere riego urgente."
+                )
+            }
         }
     }
 
